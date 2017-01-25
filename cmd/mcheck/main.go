@@ -28,7 +28,8 @@ func parsePage(t *html.Tokenizer, w io.Writer) {
 	//discardElem(t, "table") // discard navigation
 	//discardElem(t, "table") // discard page information
 
-	consumeStatsTable(t, w, "downstream")
+	consumeDownstreamStatsTable(t, w, "downstream")
+	consumeUpstreamStatsTable(t, w)
 	//consumeStatsTable(t, w, "upstream")
 	//consumeCodewordsTable(t, w, "codewords")
 }
@@ -45,7 +46,37 @@ func discardElem(t *html.Tokenizer, elem string) {
 	}
 }
 
-func consumeStatsTable(t *html.Tokenizer, w io.Writer, dir string) {
+func consumeUpstreamStatsTable(t *html.Tokenizer, w io.Writer) {
+	discardElem(t, "tr")
+
+	rawChanIds, err := parseRow(t)
+	if err != nil {
+		log.Println("Error occurred parsing row: err", err)
+		os.Exit(1)
+	}
+	stats := make(chanstat.UpstreamChannels, len(rawChanIds)-1)
+	stats.AssignID(rawChanIds)
+
+	rawFreqs, err := parseRow(t)
+	if err != nil {
+		log.Println("Error occurred parsing row: err", err)
+		os.Exit(1)
+	}
+	stats.AssignFreqs(rawFreqs)
+
+	rawRangingIDs, err := parseRow(t)
+	if err != nil {
+		log.Println("Error occurred parsing row: err", err)
+		os.Exit(1)
+	}
+	stats.AssignRangingIDs(rawRangingIDs)
+
+	for _, stat := range stats {
+		stat.LineProtocol("channel_stats", os.Stdout)
+	}
+}
+
+func consumeDownstreamStatsTable(t *html.Tokenizer, w io.Writer, dir string) {
 	discardElem(t, "tr")
 
 	rawChanIds, err := parseRow(t)
