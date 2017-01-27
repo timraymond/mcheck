@@ -56,18 +56,34 @@ func Test_UpstreamAssignRangingIDs(t *testing.T) {
 	}
 }
 
+func Test_UpstreamAssignSymRate(t *testing.T) {
+	rawSymRates := []string{"Symbol Rate", "5.120 Msym/sec\u00a0", "5.120 Msym/sec\u00a0", "5.120 Msym/sec\u00a0"}
+	expected := chanstat.UpstreamChannels{
+		chanstat.UpstreamChannel{SymbolRate: float64(5.120)},
+		chanstat.UpstreamChannel{SymbolRate: float64(5.120)},
+		chanstat.UpstreamChannel{SymbolRate: float64(5.120)},
+	}
+
+	actual := make(chanstat.UpstreamChannels, len(rawSymRates)-1)
+	actual.AssignSymRate(rawSymRates)
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Assigning ranging ids failed. \nWant: \n\n %#v, \n Got: \n\n %#v", expected, actual)
+	}
+}
+
 func Test_Upstream_LineProtocol(t *testing.T) {
 	bs := bytes.NewBufferString("")
 
 	uchans := chanstat.UpstreamChannels{
-		chanstat.UpstreamChannel{ID: 3, Frequency: uint64(23700000), PowerLevel: int64(41)},
+		chanstat.UpstreamChannel{ID: 3, Frequency: uint64(23700000), PowerLevel: int64(41), SymbolRate: float64(4.815)},
 	}
 
 	for _, uc := range uchans {
 		uc.LineProtocol("channel_stats", bs)
 	}
 
-	expected := "channel_stats,id=3,frequency=23700000 plevel=41\n"
+	expected := "channel_stats,id=3,frequency=23700000,ranging_id=0 plevel=41,sym_rate=4.815\n"
 	if actual := bs.String(); actual != expected {
 		t.Error("Unsuccessful marshal to line protocol:\nwant:", expected, "\nGot:", actual)
 	}

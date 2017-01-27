@@ -71,6 +71,13 @@ func consumeUpstreamStatsTable(t *html.Tokenizer, w io.Writer) {
 	}
 	stats.AssignRangingIDs(rawRangingIDs)
 
+	rawSymRate, err := parseRow(t)
+	if err != nil {
+		log.Println("Error occurred parsing row: err", err)
+		os.Exit(1)
+	}
+	stats.AssignSymRate(rawSymRate)
+
 	for _, stat := range stats {
 		stat.LineProtocol("channel_stats", os.Stdout)
 	}

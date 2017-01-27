@@ -37,6 +37,9 @@ func (uc *UpstreamChannel) LineProtocol(measurement string, w io.Writer) {
 
 	buf.WriteString("plevel=")
 	buf.WriteString(strconv.Itoa(int(uc.PowerLevel)))
+	buf.WriteString(",")
+	buf.WriteString("sym_rate=")
+	buf.WriteString(strconv.FormatFloat(uc.SymbolRate, 'f', -1, 64))
 
 	buf.WriteString("\n")
 	buf.WriteTo(w)
@@ -74,5 +77,16 @@ func (ucs *UpstreamChannels) AssignRangingIDs(rawIDs []string) {
 			log.Println("err parsing: err", err)
 		}
 		(*ucs)[idx].RangingServiceID = id
+	}
+}
+
+func (ucs *UpstreamChannels) AssignSymRate(rawSymRates []string) {
+	for idx, rawSymRate := range rawSymRates[1:] {
+		cleanSymRate := strings.TrimSuffix(strings.TrimSpace(rawSymRate), " Msym/sec")
+		symRate, err := strconv.ParseFloat(cleanSymRate, 64)
+		if err != nil {
+			log.Println("err parsing: err", err)
+		}
+		(*ucs)[idx].SymbolRate = symRate
 	}
 }
