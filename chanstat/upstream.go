@@ -90,3 +90,14 @@ func (ucs *UpstreamChannels) AssignSymRate(rawSymRates []string) {
 		(*ucs)[idx].SymbolRate = symRate
 	}
 }
+
+func (ucs *UpstreamChannels) AssignPowerLevels(rawPLs []string) {
+	for idx, rawPL := range rawPLs[1:] {
+		cleanPL := strings.TrimSuffix(strings.TrimSpace(rawPL), " dBmV")
+		pl, err := strconv.ParseInt(cleanPL, 10, 64)
+		if err != nil {
+			log.Println("err parsing: err", err)
+		}
+		(*ucs)[idx].PowerLevel = pl
+	}
+}

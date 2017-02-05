@@ -78,6 +78,19 @@ func consumeUpstreamStatsTable(t *html.Tokenizer, w io.Writer) {
 	}
 	stats.AssignSymRate(rawSymRate)
 
+	rawPowerLevels, err := parseRow(t)
+	if err != nil {
+		log.Println("Error occurred parsing row: err", err)
+		os.Exit(1)
+	}
+	stats.AssignPowerLevels(rawPowerLevels)
+
+	rawMods, err := parseRow(t)
+	if err != nil {
+		log.Println("Error occurred parsing row: err", err)
+		os.Exit(1)
+	}
+
 	for _, stat := range stats {
 		stat.LineProtocol("channel_stats", os.Stdout)
 	}

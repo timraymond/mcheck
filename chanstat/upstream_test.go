@@ -72,6 +72,23 @@ func Test_UpstreamAssignSymRate(t *testing.T) {
 	}
 }
 
+func Test_UpstreamAssignPowerLevels(t *testing.T) {
+	rawPowerLevels := []string{"Power Level", "32 dBmV\u00a0", "31 dBmV\u00a0", "32 dBmV\u00a0", "33 dBmV\u00a0"}
+	expected := chanstat.UpstreamChannels{
+		chanstat.UpstreamChannel{PowerLevel: int64(32)},
+		chanstat.UpstreamChannel{PowerLevel: int64(31)},
+		chanstat.UpstreamChannel{PowerLevel: int64(32)},
+		chanstat.UpstreamChannel{PowerLevel: int64(33)},
+	}
+
+	actual := make(chanstat.UpstreamChannels, len(rawPowerLevels)-1)
+	actual.AssignPowerLevels(rawPowerLevels)
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Assigning power levels failed. \nWant: \n\n %#v, \n Got: \n\n %#v", expected, actual)
+	}
+}
+
 func Test_Upstream_LineProtocol(t *testing.T) {
 	bs := bytes.NewBufferString("")
 
