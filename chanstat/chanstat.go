@@ -29,9 +29,9 @@ func (c *ChannelStat) LineProtocol(measurement string, w io.Writer) {
 	buf.WriteString("snr=")
 	buf.WriteString(strconv.Itoa(int(c.SNR)))
 	buf.WriteString(",")
-	buf.WriteString("mod=")
+	buf.WriteString("mod=\"")
 	buf.WriteString(c.Modulation)
-	buf.WriteString(",")
+	buf.WriteString("\",")
 	buf.WriteString("plevel=")
 	buf.WriteString(strconv.Itoa(int(c.PowerLevel)))
 

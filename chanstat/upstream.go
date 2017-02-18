@@ -9,13 +9,13 @@ import (
 )
 
 type UpstreamChannel struct {
-	ID                uint64
-	Frequency         uint64
-	RangingServiceID  uint64
-	SymbolRate        float64
-	PowerLevel        int64
-	Modulation        []Modulation
-	SuccessfulRanging bool
+	ID               uint64
+	Frequency        uint64
+	RangingServiceID uint64
+	SymbolRate       float64
+	PowerLevel       int64
+	Modulation       []Modulation
+	RangingOK        bool
 }
 
 func (uc *UpstreamChannel) LineProtocol(measurement string, w io.Writer) {
@@ -40,6 +40,13 @@ func (uc *UpstreamChannel) LineProtocol(measurement string, w io.Writer) {
 	buf.WriteString(",")
 	buf.WriteString("sym_rate=")
 	buf.WriteString(strconv.FormatFloat(uc.SymbolRate, 'f', -1, 64))
+	buf.WriteString(",")
+	buf.WriteString("ranging_ok=")
+	if uc.RangingOK {
+		buf.WriteString("t")
+	} else {
+		buf.WriteString("f")
+	}
 
 	buf.WriteString("\n")
 	buf.WriteTo(w)
@@ -99,5 +106,14 @@ func (ucs *UpstreamChannels) AssignPowerLevels(rawPLs []string) {
 			log.Println("err parsing: err", err)
 		}
 		(*ucs)[idx].PowerLevel = pl
+	}
+}
+
+func (ucs *UpstreamChannels) AssignRangingStatus(rawRangingStatuses []string) {
+	for idx, rawRng := range rawRangingStatuses[1:] {
+		cleanRS := strings.TrimSpace(rawRng)
+		if cleanRS == "Success" {
+			(*ucs)[idx].RangingOK = true
+		}
 	}
 }

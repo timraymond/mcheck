@@ -85,14 +85,18 @@ func consumeUpstreamStatsTable(t *html.Tokenizer, w io.Writer) {
 	}
 	stats.AssignPowerLevels(rawPowerLevels)
 
-	rawMods, err := parseRow(t)
+	discardElem(t, "tr") // toss out modulations
+
+	rawRangingStatuses, err := parseRow(t)
 	if err != nil {
 		log.Println("Error occurred parsing row: err", err)
 		os.Exit(1)
 	}
 
+	stats.AssignRangingStatus(rawRangingStatuses)
+
 	for _, stat := range stats {
-		stat.LineProtocol("channel_stats", os.Stdout)
+		stat.LineProtocol("channelstats", os.Stdout)
 	}
 }
 
@@ -136,7 +140,7 @@ func consumeDownstreamStatsTable(t *html.Tokenizer, w io.Writer, dir string) {
 	stats.AssignLevels(rawLevels)
 
 	for _, stat := range stats {
-		stat.LineProtocol("channel_stats", os.Stdout)
+		stat.LineProtocol("channelstats", os.Stdout)
 	}
 }
 

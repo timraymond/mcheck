@@ -89,6 +89,23 @@ func Test_UpstreamAssignPowerLevels(t *testing.T) {
 	}
 }
 
+func Test_UpstreamAssignRanging(t *testing.T) {
+	rawRangingStatus := []string{"Ranging Status ", "Success\u00a0", "Success\u00a0", "Success\u00a0", "Success\u00a0"}
+	expected := chanstat.UpstreamChannels{
+		chanstat.UpstreamChannel{RangingOK: true},
+		chanstat.UpstreamChannel{RangingOK: true},
+		chanstat.UpstreamChannel{RangingOK: true},
+		chanstat.UpstreamChannel{RangingOK: true},
+	}
+
+	actual := make(chanstat.UpstreamChannels, len(rawRangingStatus)-1)
+	actual.AssignRangingStatus(rawRangingStatus)
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Assigning ranging statuses failed. \nWant: \n\n %#v, \n Got: \n\n %#v", expected, actual)
+	}
+}
+
 func Test_Upstream_LineProtocol(t *testing.T) {
 	bs := bytes.NewBufferString("")
 
