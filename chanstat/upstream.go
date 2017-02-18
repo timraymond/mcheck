@@ -25,6 +25,7 @@ func (uc *UpstreamChannel) LineProtocol(measurement string, w io.Writer) {
 	buf.WriteString("id=")
 	buf.WriteString(strconv.Itoa(int(uc.ID)))
 	buf.WriteString(",")
+	buf.WriteString("direction=up,")
 
 	buf.WriteString("frequency=")
 	buf.WriteString(strconv.Itoa(int(uc.Frequency)))

@@ -28,6 +28,7 @@ func (c *ChannelStat) LineProtocol(measurement string, w io.Writer) {
 	buf.WriteString("id=")
 	buf.WriteString(strconv.Itoa(int(c.ID)))
 	buf.WriteString(",")
+	buf.WriteString("direction=down,")
 
 	buf.WriteString("frequency=")
 	buf.WriteString(strconv.Itoa(int(c.Frequency)))
