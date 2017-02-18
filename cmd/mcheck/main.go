@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/timraymond/mcheck/chanstat"
 	"golang.org/x/net/html"
@@ -143,7 +145,63 @@ func consumeDownstreamStatsTable(t *html.Tokenizer) (*chanstat.ChannelStats, err
 	return &stats, nil
 }
 
-func consumeCodewordStats(t *html.Tokenizer, ds *chanstat.ChannelStats) error { return nil }
+func consumeCodewordStats(t *html.Tokenizer, ds *chanstat.ChannelStats) error {
+	discardElem(t, "tr")
+	discardElem(t, "tr")
+
+	err := newParseRow(t, func(idx int, value string) error {
+		unerrored, err := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
+		if err != nil {
+			return err
+		}
+		(*ds)[idx].CodewordStats.TotalUnerrored = unerrored
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = newParseRow(t, func(idx int, value string) error {
+		correctable, err := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
+		if err != nil {
+			return err
+		}
+		(*ds)[idx].CodewordStats.TotalCorrectable = correctable
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = newParseRow(t, func(idx int, value string) error {
+		uncorrectable, err := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
+		if err != nil {
+			return err
+		}
+		(*ds)[idx].CodewordStats.TotalUncorrectable = uncorrectable
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func newParseRow(t *html.Tokenizer, parser func(int, string) error) error {
+	values, err := parseRow(t)
+	if err != nil {
+		return err
+	}
+	for idx, value := range values[1:] {
+		if err := parser(idx, value); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func parseRow(t *html.Tokenizer) ([]string, error) {
 	out := []string{}
