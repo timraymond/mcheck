@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -18,20 +17,35 @@ func main() {
 		os.Exit(1)
 	}
 	tok := html.NewTokenizer(resp.Body)
-	parsePage(tok, os.Stdout)
+	ds, us, err := parsePage(tok)
+	if err != nil {
+		log.Println("Error while parsing: err:", err)
+		os.Exit(1)
+	}
+	for _, d := range *ds {
+		d.LineProtocol("channelstats", os.Stdout)
+	}
+	for _, u := range *us {
+		u.LineProtocol("channelstats", os.Stdout)
+	}
 }
 
 // parsePage extracts cable modem signal information from the stats page
 // exposed at 192.168.100.1
-func parsePage(t *html.Tokenizer, w io.Writer) {
-	//discardElem(t, "table") // discard page header
-	//discardElem(t, "table") // discard navigation
-	//discardElem(t, "table") // discard page information
-
-	consumeDownstreamStatsTable(t, w, "downstream")
-	consumeUpstreamStatsTable(t, w)
-	//consumeStatsTable(t, w, "upstream")
-	//consumeCodewordsTable(t, w, "codewords")
+func parsePage(t *html.Tokenizer) (ds *chanstat.ChannelStats, us *chanstat.UpstreamChannels, err error) {
+	ds, err = consumeDownstreamStatsTable(t)
+	if err != nil {
+		return ds, us, err
+	}
+	us, err = consumeUpstreamStatsTable(t)
+	if err != nil {
+		return ds, us, err
+	}
+	err = consumeCodewordStats(t, ds)
+	if err != nil {
+		return ds, us, err
+	}
+	return ds, us, err
 }
 
 func discardElem(t *html.Tokenizer, elem string) {
@@ -46,42 +60,37 @@ func discardElem(t *html.Tokenizer, elem string) {
 	}
 }
 
-func consumeUpstreamStatsTable(t *html.Tokenizer, w io.Writer) {
+func consumeUpstreamStatsTable(t *html.Tokenizer) (*chanstat.UpstreamChannels, error) {
 	discardElem(t, "tr")
 
 	rawChanIds, err := parseRow(t)
 	if err != nil {
-		log.Println("Error occurred parsing row: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 	stats := make(chanstat.UpstreamChannels, len(rawChanIds)-1)
 	stats.AssignID(rawChanIds)
 
 	rawFreqs, err := parseRow(t)
 	if err != nil {
-		log.Println("Error occurred parsing row: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 	stats.AssignFreqs(rawFreqs)
 
 	rawRangingIDs, err := parseRow(t)
 	if err != nil {
-		log.Println("Error occurred parsing row: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 	stats.AssignRangingIDs(rawRangingIDs)
 
 	rawSymRate, err := parseRow(t)
 	if err != nil {
-		log.Println("Error occurred parsing row: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 	stats.AssignSymRate(rawSymRate)
 
 	rawPowerLevels, err := parseRow(t)
 	if err != nil {
-		log.Println("Error occurred parsing row: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 	stats.AssignPowerLevels(rawPowerLevels)
 
@@ -89,60 +98,52 @@ func consumeUpstreamStatsTable(t *html.Tokenizer, w io.Writer) {
 
 	rawRangingStatuses, err := parseRow(t)
 	if err != nil {
-		log.Println("Error occurred parsing row: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	stats.AssignRangingStatus(rawRangingStatuses)
 
-	for _, stat := range stats {
-		stat.LineProtocol("channelstats", os.Stdout)
-	}
+	return &stats, nil
 }
 
-func consumeDownstreamStatsTable(t *html.Tokenizer, w io.Writer, dir string) {
+func consumeDownstreamStatsTable(t *html.Tokenizer) (*chanstat.ChannelStats, error) {
 	discardElem(t, "tr")
 
 	rawChanIds, err := parseRow(t)
 	if err != nil {
-		log.Println("Error occurred parsing row: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 	stats := make(chanstat.ChannelStats, len(rawChanIds)-1)
 	stats.AssignID(rawChanIds)
 
 	rawFreqs, err := parseRow(t)
 	if err != nil {
-		log.Println("Error parsing frequencies: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 	stats.AssignFrequency(rawFreqs)
 
 	rawSNRs, err := parseRow(t)
 	if err != nil {
-		log.Println("Error parsing frequencies: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 	stats.AssignSNR(rawSNRs)
 
 	rawModulations, err := parseRow(t)
 	if err != nil {
-		log.Println("Error parsing frequencies: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 	stats.AssignMods(rawModulations)
 
 	rawLevels, err := parseRow(t)
 	if err != nil {
-		log.Println("Error parsing frequencies: err", err)
-		os.Exit(1)
+		return nil, err
 	}
 	stats.AssignLevels(rawLevels)
 
-	for _, stat := range stats {
-		stat.LineProtocol("channelstats", os.Stdout)
-	}
+	return &stats, nil
 }
+
+func consumeCodewordStats(t *html.Tokenizer, ds *chanstat.ChannelStats) error { return nil }
 
 func parseRow(t *html.Tokenizer) ([]string, error) {
 	out := []string{}

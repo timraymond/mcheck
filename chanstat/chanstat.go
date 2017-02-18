@@ -6,12 +6,19 @@ import (
 	"strconv"
 )
 
+type CodewordStats struct {
+	TotalUnerrored     uint64
+	TotalCorrectable   uint64
+	TotalUncorrectable uint64
+}
+
 type ChannelStat struct {
-	ID         uint64
-	Frequency  uint64
-	SNR        int64
-	Modulation string
-	PowerLevel int64
+	ID            uint64
+	Frequency     uint64
+	SNR           int64
+	Modulation    string
+	PowerLevel    int64
+	CodewordStats CodewordStats
 }
 
 func (c *ChannelStat) LineProtocol(measurement string, w io.Writer) {
